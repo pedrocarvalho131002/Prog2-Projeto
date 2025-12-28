@@ -6,6 +6,8 @@ public class World {
     private int rows;
     private int cols;
     private Organism[][] grid;
+    private Organism[][] nextGrid;
+
 
     private Random random = new Random();
 
@@ -109,5 +111,64 @@ public class World {
             }
         }
     }
+
+    public void step() {
+
+        // Grelha temporária para construir o próximo estado
+        nextGrid = new Organism[rows][cols];
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+
+                Organism o = grid[i][j];
+                if (o == null) continue;
+
+                // envelhecer
+                o.incrementAge();
+                if (!o.isAlive()) continue;
+
+                // energia (só para animais)
+                if (o instanceof Animal) {
+                    Animal a = (Animal) o;
+                    a.consumeEnergy();
+                    if (!a.isAlive()) continue;
+
+                    // movimento + alimentação (cada animal decide)
+                    a.move(this);
+                } else {
+                    // Planta fica no mesmo sítio (por agora)
+                    o.setPosition(i, j);
+                    placeInNext(i, j, o);
+                }
+            }
+        }
+
+        // Troca do estado
+        grid = nextGrid;
+        nextGrid = null;
+    }
+
+
+
+    public int randInt(int bound) {
+        return random.nextInt(bound);
+    }
+
+    public double randDouble() {
+        return random.nextDouble();
+    }
+
+
+    public boolean isNextEmpty(int x, int y) {
+        return nextGrid != null && inside(x, y) && nextGrid[x][y] == null;
+    }
+
+    public void placeInNext(int x, int y, Organism o) {
+        if (nextGrid == null) return;
+        if (!inside(x, y)) return;
+        nextGrid[x][y] = o;
+    }
+
+
 
 }

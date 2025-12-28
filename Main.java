@@ -22,5 +22,13 @@ public class Main {
 
         world.initialize(pWolf, pSheep, pPlant);
         world.print();
+        for (int t = 1; t <= 3; t++) {
+            world.step();
+            System.out.println("Depois de " + t + " step:");
+            world.print();
+        }
+
+
     }
+
 }
