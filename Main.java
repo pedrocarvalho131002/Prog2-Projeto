@@ -1,34 +1,84 @@
+import java.util.Scanner;
+
 public class Main {
 
     public static void main(String[] args) {
 
-        int width = 20;
-        int height = 20;
+        Scanner scanner = new Scanner(System.in);
 
-        double pWolf = 0.04;
-        double pSheep = 0.12;
-        double pPlant = 0.75;
+        World world = new World(20, 20);
+        world.initializeRandomly();
 
-        System.out.println("Simulação iniciada.");
-        System.out.println(
-                "World criado: " + width + "x" + height +
-                        " | pWolf=" + pWolf +
-                        " pSheep=" + pSheep +
-                        " pPlant=" + pPlant
-        );
+        boolean running = true;
+        int step = 0;
 
-        World world = new World(width, height);
+        while (running) {
+            System.out.println("\n===== SIMULACAO ECOSSISTEMA =====");
+            System.out.println("1 - Executar passo a passo");
+            System.out.println("2 - Executar N passos");
+            System.out.println("3 - Executar ate extincao de uma especie");
+            System.out.println("0 - Sair");
+            System.out.print("Opcao: ");
 
+            int option = scanner.nextInt();
 
-        world.initialize(pWolf, pSheep, pPlant);
-        world.print();
-        for (int t = 1; t <= 3; t++) {
-            world.step();
-            System.out.println("Depois de " + t + " step:");
-            world.print();
+            switch (option) {
+
+                case 1:
+                    System.out.println("\nModo passo a passo (ENTER para continuar, 0 para sair)");
+                    scanner.nextLine();
+
+                    while (true) {
+                        System.out.println("\nSTEP " + step);
+                        world.printWorld();
+                        world.step();
+                        step++;
+
+                        String input = scanner.nextLine();
+                        if (input.equals("0")) break;
+                    }
+                    break;
+
+                case 2:
+                    System.out.print("Quantos passos deseja executar? ");
+                    int n = scanner.nextInt();
+
+                    for (int i = 0; i < n; i++) {
+                        System.out.println("\nSTEP " + step);
+                        world.printWorld();
+                        world.step();
+                        step++;
+                    }
+                    break;
+
+                case 3:
+                    System.out.println("\nA executar ate extincao de uma especie...");
+
+                    while (world.hasSheep() && world.hasWolves()) {
+                        System.out.println("\nSTEP " + step);
+                        world.printWorld();
+                        world.step();
+                        step++;
+                    }
+
+                    System.out.println("\n--- SIMULACAO TERMINADA ---");
+                    if (!world.hasSheep()) {
+                        System.out.println("As ovelhas foram extintas.");
+                    } else if (!world.hasWolves()) {
+                        System.out.println("Os lobos foram extintos.");
+                    }
+                    break;
+
+                case 0:
+                    running = false;
+                    break;
+
+                default:
+                    System.out.println("Opcao invalida.");
+            }
         }
 
-
+        scanner.close();
+        System.out.println("Programa terminado.");
     }
-
 }

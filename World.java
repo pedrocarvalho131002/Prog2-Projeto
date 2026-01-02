@@ -1,174 +1,226 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
-
-
 public class World {
-    private int rows;
-    private int cols;
+
+    private int width;
+    private int height;
     private Organism[][] grid;
-    private Organism[][] nextGrid;
+    private List<Organism> organisms;
 
-
-    private Random random = new Random();
-
-    public World(int rows, int cols) {
-        this.rows = rows;
-        this.cols = cols;
-        this.grid = new Organism[rows][cols];
+    public World(int width, int height) {
+        this.width = width;
+        this.height = height;
+        this.grid = new Organism[height][width];
+        this.organisms = new ArrayList<>();
     }
 
-    //Esta parte serve para validar limites, ler as células, saber se a grelha está vazia e imprimir a grelha
-    public boolean inside(int x, int y) {
-        return x >= 0 && x < rows && y >= 0 && y < cols;
-    }
-
-    public Organism getAt(int x, int y) {
-        if (!inside(x, y)) return null;
-        return grid[x][y];
+    public boolean isInside(int x, int y) {
+        return x >= 0 && x < width && y >= 0 && y < height;
     }
 
     public boolean isEmpty(int x, int y) {
-        return inside(x, y) && grid[x][y] == null;
+        return isInside(x, y) && grid[y][x] == null;
     }
 
-    public void setAt(int x, int y, Organism org) {
-        if (!inside(x, y)) return;
-        grid[x][y] = org;
+    public boolean hasSheep() {
+        for (Organism o : organisms) {
+            if (o instanceof Sheep) return true;
+        }
+        return false;
     }
 
-    public void removeOrganismAt(int x, int y) {
-        if (!inside(x, y)) return;
-        grid[x][y] = null;
+    public boolean hasWolves() {
+        for (Organism o : organisms) {
+            if (o instanceof Wolf) return true;
+        }
+        return false;
     }
 
-    public void print() {
+    public Organism getOrganism(int x, int y) {
+        if (!isInside(x, y)) return null;
+        return grid[y][x];
+    }
 
-        System.out.print("+");
-        for (int j = 0; j < cols; j++) System.out.print("--");
-        System.out.println("+");
+    public List<Organism> getOrganisms() {
+        return new ArrayList<>(organisms);
+    }
 
-        for (int i = 0; i < rows; i++) {
-            System.out.print("|");
-            for (int j = 0; j < cols; j++) {
-                Organism o = grid[i][j];
-                char c = (o == null) ? '.' : o.getSymbol();
-                System.out.print(c + " ");
+    public void addOrganism(Organism o) {
+        if (isEmpty(o.getX(), o.getY())) {
+            grid[o.getY()][o.getX()] = o;
+            organisms.add(o);
+        }
+    }
+
+    public void removeOrganism(Organism o) {
+        grid[o.getY()][o.getX()] = null;
+        organisms.remove(o);
+    }
+
+    public void moveOrganism(Organism o, int newX, int newY) {
+        if (!isInside(newX, newY)) return;
+
+        grid[o.getY()][o.getX()] = null;
+        o.setPosition(newX, newY);
+        grid[newY][newX] = o;
+    }
+
+    public void reproduceSheep() {
+        List<Sheep> sheepList = new ArrayList<>();
+        for (Organism o : organisms) {
+            if (o instanceof Sheep) {
+                sheepList.add((Sheep) o);
             }
-            System.out.println("|");
         }
 
+        Random rand = new Random();
 
-        System.out.print("+");
-        for (int j = 0; j < cols; j++) System.out.print("--");
-        System.out.println("+");
-    }
+        for (int i = 0; i < sheepList.size(); i++) {
+            for (int j = i + 1; j < sheepList.size(); j++) {
 
+                Sheep s1 = sheepList.get(i);
+                Sheep s2 = sheepList.get(j);
 
-    public int countPlants() {
-        int c = 0;
-        for (int i = 0; i < rows; i++)
-            for (int j = 0; j < cols; j++)
-                if (grid[i][j] instanceof Plant) c++;
-        return c;
-    }
+                if (s1.getX() == s2.getX() && s1.getY() == s2.getY()) {
 
-    public int countSheep() {
-        int c = 0;
-        for (int i = 0; i < rows; i++)
-            for (int j = 0; j < cols; j++)
-                if (grid[i][j] instanceof Sheep) c++;
-        return c;
-    }
+                    if (s1.getAge() >= Sheep.MIN_REPRO_AGE &&
+                        s2.getAge() >= Sheep.MIN_REPRO_AGE &&
+                        s1.getEnergy() >= Sheep.MIN_REPRO_ENERGY &&
+                        s2.getEnergy() >= Sheep.MIN_REPRO_ENERGY &&
+                        rand.nextDouble() < Sheep.REPRO_PROB) {
 
-    public int countWolves() {
-        int c = 0;
-        for (int i = 0; i < rows; i++)
-            for (int j = 0; j < cols; j++)
-                if (grid[i][j] instanceof Wolf) c++;
-        return c;
-    }
+                        int[] dx = {-1, 1, 0, 0};
+                        int[] dy = {0, 0, -1, 1};
 
-    //Esta função serve para inicializar o mundo, cada célula é preenchida conforme a prob. ou fica vazia
-    public void initialize(double pWolf, double pSheep, double pPlant) {
+                        for (int d = 0; d < 4; d++) {
+                            int nx = s1.getX() + dx[d];
+                            int ny = s1.getY() + dy[d];
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-
-                double r = random.nextDouble();
-
-                if (r < pWolf) {
-                    grid[i][j] = new Wolf(i, j);
+                            if (isInside(nx, ny) && isEmpty(nx, ny)) {
+                                addOrganism(new Sheep(this, nx, ny));
+                                return;
+                            }
+                        }
+                    }
                 }
-                else if (r < pWolf + pSheep) {
-                    grid[i][j] = new Sheep(i, j);
+            }
+        }
+    }
+
+    public void reproduceWolves() {
+        List<Wolf> wolfList = new ArrayList<>();
+        for (Organism o : organisms) {
+            if (o instanceof Wolf) {
+                wolfList.add((Wolf) o);
+            }
+        }
+
+        Random rand = new Random();
+
+        for (int i = 0; i < wolfList.size(); i++) {
+            for (int j = i + 1; j < wolfList.size(); j++) {
+
+                Wolf w1 = wolfList.get(i);
+                Wolf w2 = wolfList.get(j);
+
+                if (w1.getX() == w2.getX() && w1.getY() == w2.getY()) {
+
+                    if (w1.getAge() >= Wolf.MIN_REPRO_AGE &&
+                        w2.getAge() >= Wolf.MIN_REPRO_AGE &&
+                        w1.getEnergy() >= Wolf.MIN_REPRO_ENERGY &&
+                        w2.getEnergy() >= Wolf.MIN_REPRO_ENERGY &&
+                        rand.nextDouble() < Wolf.REPRO_PROB) {
+
+                        int[] dx = {-1, 1, 0, 0};
+                        int[] dy = {0, 0, -1, 1};
+
+                        for (int d = 0; d < 4; d++) {
+                            int nx = w1.getX() + dx[d];
+                            int ny = w1.getY() + dy[d];
+
+                            if (isInside(nx, ny) && isEmpty(nx, ny)) {
+                                addOrganism(new Wolf(this, nx, ny));
+                                return;
+                            }
+                        }
+                    }
                 }
-                else if (r < pWolf + pSheep + pPlant) {
-                    grid[i][j] = new Plant(i, j);
-                }
-                else {
-                    grid[i][j] = null;
+            }
+        }
+    }
+
+    public void initializeRandomly() {
+        Random rand = new Random();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+
+                double r = rand.nextDouble();
+
+                if (r < 0.04) {
+                    addOrganism(new Wolf(this, x, y));
+                } 
+                else if (r < 0.16) {
+                    addOrganism(new Sheep(this, x, y));
+                } 
+                else if (r < 0.91) {
+                    addOrganism(new Plant(this, x, y));
                 }
             }
         }
     }
 
     public void step() {
-
-        // Grelha temporária para construir o próximo estado
-        nextGrid = new Organism[rows][cols];
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-
-                Organism o = grid[i][j];
-                if (o == null) continue;
-
-                // envelhecer
-                o.incrementAge();
-                if (!o.isAlive()) continue;
-
-                // energia (só para animais)
-                if (o instanceof Animal) {
-                    Animal a = (Animal) o;
-                    a.consumeEnergy();
-                    if (!a.isAlive()) continue;
-
-                    // movimento + alimentação (cada animal decide)
-                    a.move(this);
-                } else {
-                    // Planta fica no mesmo sítio (por agora)
-                    o.setPosition(i, j);
-                    placeInNext(i, j, o);
-                }
+        List<Organism> current = new ArrayList<>(organisms);
+        for (Organism o : current) {
+            if (o.isAlive()) {
+                o.act();
             }
         }
 
-        // Troca do estado
-        grid = nextGrid;
-        nextGrid = null;
+        reproduceSheep();
+        reproduceWolves();
+
+        List<Organism> toRemove = new ArrayList<>();
+        for (Organism o : organisms) {
+            if (!o.isAlive()) {
+                toRemove.add(o);
+            }
+        }
+        for (Organism o : toRemove) {
+            removeOrganism(o);
+        }
     }
 
+    public void printWorld() {
 
+        //superior
+        System.out.print("+");
+        for (int i = 0; i < width * 2 - 1; i++) {
+            System.out.print("-");
+        }
+        System.out.println("+");
 
-    public int randInt(int bound) {
-        return random.nextInt(bound);
+        //conteudo
+        for (int y = 0; y < height; y++) {
+            System.out.print("|");
+            for (int x = 0; x < width; x++) {
+                if (grid[y][x] == null) {
+                    System.out.print(". ");
+                } else {
+                    System.out.print(grid[y][x].getSymbol() + " ");
+                }
+            }
+            System.out.println("|");
+        }
+
+        //inferior
+        System.out.print("+");
+        for (int i = 0; i < width * 2 - 1; i++) {
+            System.out.print("-");
+        }
+        System.out.println("+\n");
     }
-
-    public double randDouble() {
-        return random.nextDouble();
-    }
-
-
-    public boolean isNextEmpty(int x, int y) {
-        return nextGrid != null && inside(x, y) && nextGrid[x][y] == null;
-    }
-
-    public void placeInNext(int x, int y, Organism o) {
-        if (nextGrid == null) return;
-        if (!inside(x, y)) return;
-        nextGrid[x][y] = o;
-    }
-
-
-
 }

@@ -2,21 +2,19 @@ public abstract class Organism {
     protected int x;
     protected int y;
     protected int age;
-    protected int maxAge;
-    protected boolean alive = true;
+    protected boolean alive;
+    protected World world;
 
-    public Organism(int x, int y, int maxAge) {
+    public Organism(World world, int x, int y) {
+        this.world = world;
         this.x = x;
         this.y = y;
-        this.maxAge = maxAge;
         this.age = 0;
+        this.alive = true;
     }
 
-    public void incrementAge() {
+    public void increaseAge() {
         age++;
-        if (age > maxAge) {
-            alive = false;
-        }
     }
 
     public boolean isAlive() {
@@ -24,7 +22,7 @@ public abstract class Organism {
     }
 
     public void die() {
-        this.alive = false;
+        alive = false;
     }
 
     public int getX() {
@@ -35,10 +33,11 @@ public abstract class Organism {
         return y;
     }
 
-    public void setPosition(int x, int y) {
-        this.x = x;
-        this.y = y;
+    public void setPosition(int newX, int newY) {
+        this.x = newX;
+        this.y = newY;
     }
 
+    public abstract void act();
     public abstract char getSymbol();
 }
