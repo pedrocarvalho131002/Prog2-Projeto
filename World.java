@@ -39,6 +39,7 @@ public class World {
         organisms.remove(o);
     }
 
+    //Ajuda LLM
     public void move(Organism o, int nx, int ny) {
         grid[o.getX()][o.getY()] = null;
         o.x = nx;

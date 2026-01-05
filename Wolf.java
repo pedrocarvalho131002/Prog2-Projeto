@@ -10,6 +10,7 @@ public class Wolf extends Animal {
         super(world, x, y, INIT_ENERGY, MAX_AGE, -1);
     }
 
+    //Ajuda do LLM m sheep.java adaptada para Wolf.java
     @Override
     public void step() {
         ageAndConsume();

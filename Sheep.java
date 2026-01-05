@@ -10,6 +10,7 @@ public class Sheep extends Animal {
         super(world, x, y, INIT_ENERGY, MAX_AGE, -1);
     }
 
+    //ajuda LLM
     @Override
     public void step() {
         ageAndConsume();
@@ -35,8 +36,7 @@ public class Sheep extends Animal {
         for (Organism o : world.getAt(x, y)) {
             if (o instanceof Sheep && o != this) {
                 Sheep other = (Sheep) o;
-                if (canReproduce(5, 20) && other.canReproduce(5, 20)
-                        && rnd.nextDouble() < 0.30) {
+                if (canReproduce(5, 20) && other.canReproduce(5, 20) && rnd.nextDouble() < 0.30) {
 
                     int[] rd = dirs[rnd.nextInt(dirs.length)];
                     int rx = x + rd[0];

@@ -9,6 +9,7 @@ public class Plant extends Organism {
         super(world, x, y);
     }
 
+    //ajuda LLM
     @Override
     public void step() {
         age++;

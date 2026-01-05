@@ -12,7 +12,7 @@ public class Main {
         Random rnd = new Random();
         Scanner sc = new Scanner(System.in);
 
-        // Inicialização da grelha com probabilidades
+        //Ajuda da LLM
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
                 double r = rnd.nextDouble();
