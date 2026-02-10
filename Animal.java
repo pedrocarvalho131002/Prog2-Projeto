@@ -1,24 +1,29 @@
 public abstract class Animal extends Organism {
     protected int energy;
-    protected int maxAge;
-    protected int energyPerStep;
+    protected int energyCostPerStep;
 
-    public Animal(World world, int x, int y, int energy, int maxAge, int energyPerStep) {
-        super(world, x, y);
-        this.energy = energy;
-        this.maxAge = maxAge;
-        this.energyPerStep = energyPerStep;
+    public Animal(World world, int x, int y, int initEnergy, int maxAge, int energyCostPerStep) {
+        super(world, x, y, maxAge);
+        this.energy = initEnergy;
+        this.energyCostPerStep = energyCostPerStep;
     }
 
-    protected void ageAndConsume() {
-        age++;
-        energy += energyPerStep;
-        if (age > maxAge || energy <= 0) {
+    @Override
+    public void ageOneStep() {
+        super.ageOneStep();
+        if (!alive) return;
+
+        energy += energyCostPerStep; // tipicamente -1 por passo
+        if (energy <= 0) {
             die();
         }
     }
 
-    protected boolean canReproduce(int minAge, int minEnergy) {
-        return age >= minAge && energy >= minEnergy;
+    public int getEnergy() {
+        return energy;
+    }
+
+    public boolean canReproduce(int minAge, int minEnergy) {
+        return alive && age >= minAge && energy >= minEnergy;
     }
 }

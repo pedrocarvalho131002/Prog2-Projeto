@@ -1,94 +1,141 @@
-import java.util.Random;
 import java.util.Scanner;
 
 public class Main {
 
-    private static final int WIDTH = 20;
-    private static final int HEIGHT = 20;
+    private static int readInt(Scanner sc, String msg, int min, int max) {
+        while (true) {
+            System.out.print(msg);
+            String line = sc.nextLine().trim();
+            try {
+                int v = Integer.parseInt(line);
+                if (v < min || v > max) {
+                    System.out.println("Valor invalido.");
+                } else {
+                    return v;
+                }
+            } catch (Exception e) {
+                System.out.println("Valor invalido.");
+            }
+        }
+    }
+
+    private static double readDouble01(Scanner sc, String msg) {
+        while (true) {
+            System.out.print(msg);
+            String line = sc.nextLine().trim();
+            line = line.replace(',', '.'); // aceita virgula sem “avisos”
+            try {
+                double v = Double.parseDouble(line);
+                if (v < 0.0 || v > 1.0) {
+                    System.out.println("Valor invalido.");
+                } else {
+                    return v;
+                }
+            } catch (Exception e) {
+                System.out.println("Valor invalido.");
+            }
+        }
+    }
 
     public static void main(String[] args) {
-
-        World world = new World(WIDTH, HEIGHT);
-        Random rnd = new Random();
         Scanner sc = new Scanner(System.in);
 
-        //Ajuda da LLM
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-                double r = rnd.nextDouble();
-                if (r < 0.04) {
-                    world.addOrganism(new Wolf(world, x, y));
-                } else if (r < 0.16) {
-                    world.addOrganism(new Sheep(world, x, y));
-                } else if (r < 0.91) {
-                    world.addOrganism(new Plant(world, x, y));
+        int width = 20;
+        int height = 20;
+
+        double pWolf = 0.04;
+        double pSheep = 0.12;
+        double pPlant = 0.75;
+
+        System.out.println("Simulacao de ecossistema (Plantas, Ovelhas, Lobos)");
+        System.out.println("1) Usar valores pre-definidos (20x20, pW=0.04, pO=0.12, pP=0.75)");
+        System.out.println("2) Definir manualmente");
+        int optInit = readInt(sc, "Opcao: ", 1, 2);
+
+        if (optInit == 2) {
+            width = readInt(sc, "Largura da grelha: ", 1, 200);
+            height = readInt(sc, "Altura da grelha: ", 1, 200);
+
+            while (true) {
+                pWolf = readDouble01(sc, "Probabilidade inicial de Lobos (0..1): ");
+                pSheep = readDouble01(sc, "Probabilidade inicial de Ovelhas (0..1): ");
+                pPlant = readDouble01(sc, "Probabilidade inicial de Plantas (0..1): ");
+
+                if (pWolf + pSheep + pPlant <= 1.0) {
+                    break;
                 }
+                System.out.println("A soma das probabilidades tem de ser <= 1.0.");
             }
         }
 
-        boolean running = true;
+        World world = new World(width, height);
+        world.initialize(pWolf, pSheep, pPlant);
 
-        while (running) {
-            System.out.println("\n===== SIMULADOR DE ECOSSISTEMA =====");
-            System.out.println("1 - Executar 1 passo");
-            System.out.println("2 - Executar N passos");
-            System.out.println("3 - Executar até extinção de uma espécie");
-            System.out.println("0 - Sair");
-            System.out.print("Opção: ");
+        System.out.println();
+        world.print();
+        world.printCounts();
 
-            int option = sc.nextInt();
+        int stepCounter = 0;
 
-            switch (option) {
-                case 1:
-                    world.stepAll();
+        while (true) {
+            System.out.println();
+            System.out.println("Menu:");
+            System.out.println("1) Executar 1 passo");
+            System.out.println("2) Executar N passos");
+            System.out.println("3) Executar ate extincao de uma especie");
+            System.out.println("4) Mostrar estatisticas");
+            System.out.println("5) Exportar evolucao para CSV");
+            System.out.println("0) Sair");
+
+            int op = readInt(sc, "Opcao: ", 0, 5);
+
+            if (op == 0) break;
+
+            if (op == 1) {
+                stepCounter++;
+                world.step();
+                System.out.println("\nPasso " + stepCounter);
+                world.print();
+                world.printCounts();
+
+            } else if (op == 2) {
+                int n = readInt(sc, "N passos: ", 1, 100000);
+
+                for (int i = 0; i < n; i++) {
+                    stepCounter++;
+                    world.step();
+                    System.out.println("\nPasso " + stepCounter);
                     world.print();
-                    break;
+                    world.printCounts();
 
-                case 2:
-                    System.out.print("Quantos passos deseja executar? ");
-                    int n = sc.nextInt();
-
-                    for (int i = 0; i < n; i++) {
-                        world.stepAll();
-                        world.print();
-
-                        if (extinctSpecies(world) != null) {
-                            System.out.println(
-                                "Espécie extinta: " + extinctSpecies(world) +
-                                ". Simulação interrompida."
-                            );
-                            break;
-                        }
+                    if (!world.hasPlants() || !world.hasSheep() || !world.hasWolves()) {
+                        System.out.println("Parou por extincao de uma especie.");
+                        break;
                     }
-                    break;
+                }
 
-                case 3:
-                    while (extinctSpecies(world) == null) {
-                        world.stepAll();
-                        world.print();
-                    }
-                    System.out.println("Espécie extinta: " + extinctSpecies(world));
-                    System.out.println("Simulação terminada.");
-                    break;
+            } else if (op == 3) {
+                while (world.hasPlants() && world.hasSheep() && world.hasWolves()) {
+                    stepCounter++;
+                    world.step();
+                    System.out.println("\nPasso " + stepCounter);
+                    world.print();
+                    world.printCounts();
+                }
+                System.out.println("Parou por extincao de uma especie.");
 
-                case 0:
-                    running = false;
-                    System.out.println("Simulação terminada.");
-                    break;
+            } else if (op == 4) {
+                world.showStats();
 
-                default:
-                    System.out.println("Opção inválida.");
+            } else if (op == 5) {
+                System.out.print("Nome do ficheiro (ex.: stats.csv): ");
+                String name = sc.nextLine().trim();
+                if (name.length() == 0) name = "stats.csv";
+                world.exportStatsCSV(name);
             }
         }
 
+        System.out.println("Fim.");
         sc.close();
     }
-
-    private static String extinctSpecies(World world) {
-        if (!world.speciesAlive(Plant.class)) return "Plantas";
-        if (!world.speciesAlive(Sheep.class)) return "Ovelhas";
-        if (!world.speciesAlive(Wolf.class))  return "Lobos";
-        return null;
-    }
-
 }
